@@ -105,7 +105,7 @@ public class LiveDemoActivity extends Activity implements
 	                //path = "rtsp://58.241.134.33:554/11";
 
 
-				path=readtxt("/mnt/sdcard/LiveDemo/"+pathid);
+				path=readtxt(String.valueOf(pathid));//
 
 				if((path == "")||(path==null))
 				{
@@ -240,7 +240,7 @@ public class LiveDemoActivity extends Activity implements
 	    		    mMediaPlayer.reset();
 		int maxid=0;
 		try{ 
-			maxid=Integer.parseInt(readtxt("/mnt/sdcard/LiveDemo/chnum.txt")); 
+			maxid=Integer.parseInt(readtxt("chnum.txt")); 
 			Log.d(TAG, "maxid==" + maxid);
 		} 
 		catch(NumberFormatException   e) 
@@ -264,8 +264,7 @@ public class LiveDemoActivity extends Activity implements
 				currentid=maxid;
 			currentid=--currentid%maxid;	
 		}
-	                	path=readtxt("/mnt/sdcard/LiveDemo/"+currentid);
-
+				path=readtxt(String.valueOf(currentid));
 				Log.d(TAG, "path==================" + path);
 				if((path == "")||(path==null))
 				{
@@ -313,28 +312,23 @@ public class LiveDemoActivity extends Activity implements
     		return (true);
 	}
     
-  public String readtxt(String filename) {  
-  	String lineTXT = null;   
-    try {    
-        String encoding = "GBK"; // ×Ö·û±àÂë(¿É½â¾öÖĞÎÄÂÒÂëÎÊÌâ )    
-        File file = new File(filename);    // "c:/aa.txt"
-        if (file.isFile() && file.exists()) {    
-            InputStreamReader read = new InputStreamReader(    
-                    new FileInputStream(file), encoding);    
-            BufferedReader bufferedReader = new BufferedReader(read);    
+	public String readtxt(String filename) {  
+		String lineTXT = null;   
+		try {    
+			String encoding = "GBK"; // å­—ç¬¦ç¼–ç (å¯è§£å†³ä¸­æ–‡ä¹±ç é—®é¢˜ )    
+			//InputStreamReader read = new InputStreamReader(new FileInputStream(file), encoding);    
+			InputStreamReader read = new InputStreamReader(getResources().getAssets().open(filename),encoding); 
+			BufferedReader bufferedReader = new BufferedReader(read);    
               
-            //while ((lineTXT = bufferedReader.readLine()) != null) {    
-            //     System.out.println(lineTXT.toString().trim());    
-            //}   
-            lineTXT = bufferedReader.readLine();
-            read.close(); 
-        }else{    
-            System.out.println("ÕÒ²»µ½Ö¸¶¨µÄÎÄ¼ş£¡");    
-        }    
-    } catch (Exception e) {    
-        System.out.println("¶ÁÈ¡ÎÄ¼şÄÚÈİ²Ù×÷³ö´í");    
-        e.printStackTrace();    
-    }  
-    return lineTXT;     
+			//while ((lineTXT = bufferedReader.readLine()) != null) {    
+			//     System.out.println(lineTXT.toString().trim());    
+			//}   
+			lineTXT = bufferedReader.readLine();
+			read.close(); 
+		} catch (Exception e) {    
+			System.out.println("è¯»å–æ–‡ä»¶å†…å®¹æ“ä½œå‡ºé”™");    
+			e.printStackTrace();    
+		}  
+		return lineTXT;     
 	}      
 }
