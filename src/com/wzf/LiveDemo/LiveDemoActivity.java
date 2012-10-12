@@ -316,8 +316,18 @@ public class LiveDemoActivity extends Activity implements
 		String lineTXT = null;   
 		try {    
 			String encoding = "GBK"; // 字符编码(可解决中文乱码问题 )    
-			//InputStreamReader read = new InputStreamReader(new FileInputStream(file), encoding);    
-			InputStreamReader read = new InputStreamReader(getResources().getAssets().open(filename),encoding); 
+			String filepath="/mnt/sdcard/LiveDemo/";
+			InputStreamReader read=null;
+
+			if((new File(filepath).isDirectory())){
+				read = new InputStreamReader(new FileInputStream(filepath+filename), encoding);
+				Log.d(TAG, "Read File From SDCARD.");
+			}
+			else{
+				read = new InputStreamReader(getResources().getAssets().open(filename),encoding); 
+				Log.d(TAG, "Read File From Assets.");
+			}
+
 			BufferedReader bufferedReader = new BufferedReader(read);    
               
 			//while ((lineTXT = bufferedReader.readLine()) != null) {    
