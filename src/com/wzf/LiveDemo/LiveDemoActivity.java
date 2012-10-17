@@ -17,10 +17,15 @@ import android.view.KeyEvent;
 import android.net.Uri;
 import java.io.BufferedReader;    
 import java.io.File;    
-import java.io.FileInputStream;    
+import java.io.FileInputStream;  
+import java.io.FileOutputStream;  
 import java.io.InputStreamReader; 
-
-
+import java.util.Properties; 
+import android.content.Context;
+import java.io.IOException;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class LiveDemoActivity extends Activity implements
 	    OnBufferingUpdateListener, OnCompletionListener,
@@ -34,13 +39,8 @@ public class LiveDemoActivity extends Activity implements
 	private SurfaceHolder holder;
 	private String path;
 	private Integer currentid = 0;
-	//private String channel13 = "http://v.iseeyoo.cn/video/2012/01/26/3863b5e6-4801-11e1-89a1-001e0bd5b3ca_041832_001.mp4";
-	private String channel6 ="rtsp://58.241.134.33:554/301";//"rtsp://218.204.223.237:554/live/1/66251FC11353191F/e7ooqwcfbqjoo80j.sdp"; //
-	private String channel5  ="rtsp://116.199.127.68/guoji";
-	private String channel4 ="rtsp://116.199.127.68/huayu";
-	private String channel3 ="rtsp://116.199.127.68/bengang";
-	private String channel2 ="rtsp://116.199.127.68/fenghuang";
-	private String channel1 ="rtsp://116.199.127.68/gztv_sport";
+	private String channeldef ="rtsp://58.241.134.33:554/301";
+
 	private Bundle extras;
 	private static final String MEDIA = "media";
 	private static final int LOCAL_AUDIO = 1;
@@ -50,21 +50,26 @@ public class LiveDemoActivity extends Activity implements
 	private static final int STREAM_VIDEO = 5;
 	private boolean mIsVideoSizeKnown = false;
 	private boolean mIsVideoReadyToBePlayed = false;
-	
+	private Properties prop;
+	private Context context;
+	//private String PropPath1 = "/data/data/"+ getPackageName()+"/shared_prefs/config.properties";
+	private String PropPath2 = android.os.Environment.getExternalStorageDirectory().getAbsolutePath()+ "/com.wzf.LiveDemo/shared_prefs/";
 		/**
 	 * 
 	 * Called when the activity is first created.
 	 */
 	@Override
 	public void onCreate(Bundle icicle) {
-	    super.onCreate(icicle);
-	    setContentView(R.layout.mediaplayer_2);
-	    mPreview = (SurfaceView) findViewById(R.id.surface);
-	    holder = mPreview.getHolder();
-	    holder.addCallback(this);
-	    holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-	    Log.d(TAG,"SDK Version: "+Build.VERSION.SDK_INT);
-	    //extras = getIntent().getExtras();
+		super.onCreate(icicle);
+		setContentView(R.layout.mediaplayer_2);
+		mPreview = (SurfaceView) findViewById(R.id.surface);
+		holder = mPreview.getHolder();
+		holder.addCallback(this);
+		copyAssetsToSD();
+		TestProp();
+		holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+		Log.d(TAG,"SDK Version: "+Build.VERSION.SDK_INT);
+		//extras = getIntent().getExtras();
 	}
 	
 	private void playVideo(Integer Media,Integer pathid) {
@@ -109,7 +114,7 @@ public class LiveDemoActivity extends Activity implements
 
 				if((path == "")||(path==null))
 				{
-	                		path =channel1;
+	                		path =channeldef;
 	                	}
 
 
@@ -268,7 +273,7 @@ public class LiveDemoActivity extends Activity implements
 				Log.d(TAG, "path==================" + path);
 				if((path == "")||(path==null))
 				{
-							path =channel1;
+							path =channeldef;
 							Log.d(TAG, "update path==================" + path);
                 		}
 				
@@ -340,5 +345,121 @@ public class LiveDemoActivity extends Activity implements
 			e.printStackTrace();    
 		}  
 		return lineTXT;     
-	}      
+	}
+
+	//读取配置文件 
+	public Properties loadConfig(Context context,String file) {
+	Properties properties = new Properties();
+		try {
+			FileInputStream s = new FileInputStream(file);
+			properties.load(s);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+		return properties;
+	}
+	//保存配置文件
+	public boolean saveConfig(Context context,String file, Properties properties) {
+		try {
+			File fil=new File(file);
+			if(!fil.exists())
+			fil.createNewFile();
+			FileOutputStream s = new FileOutputStream(fil);
+			properties.store(s, "");
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+
+	public void TestProp(){
+		boolean b=false;
+		String s="";
+		int i=0;
+		prop=loadConfig(context,PropPath2+"config.properties");
+		if(prop==null){
+			//配置文件不存在的时候创建配置文件 初始化配置信息
+			Log.d(TAG, "config file isn't exist!");
+			prop=new Properties();
+			prop.put("bool", "yes");
+			prop.put("string", "aaaaaaaaaaaaaaaa");
+			prop.put("int", "110");//也可以添加基本类型数据 get时就需要强制转换成封装类型
+			saveConfig(context,PropPath2+"config.properties",prop);
+		}
+		
+		prop.put("bool", "no");//put方法可以直接修改配置信息，不会重复添加
+		b=(((String)prop.get("bool")).equals("yes"))?true:false;//get出来的都是Object对象 如果是基本类型 需要用到封装类
+		s=(String)prop.get("string");
+		i=Integer.parseInt((String)prop.get("int"));
+		saveConfig(context,PropPath2+"config.properties",prop);
+	}
+
+	void copyAssetsToSD() { 
+            String[] files;             
+            try    
+        {    
+            files = this.getResources().getAssets().list("");    
+        }    
+        catch (IOException e1)    
+        {    
+            return;    
+        }   
+        //String DB_PATH = android.os.Environment.getExternalStorageDirectory().getAbsolutePath()+ "/com.wzf.LiveDemo/shared_prefs/";
+		//String DB_PATH = "/data/data/"+ getPackageName()+"/shared_prefs/";
+		//Log.d(TAG, "DB_PATH ="+DB_PATH);
+        File mWorkingPath = new File(PropPath2);
+        //if this directory does not exists, make one. 
+        if(!mWorkingPath.exists())    
+        {    
+            Log.d(TAG, "directory does not exists, make one");
+            if(!mWorkingPath.mkdirs())    
+            {    
+                 Log.e(TAG, "make directory fail.");
+            }    
+        }    
+        
+        for(int i = 0; i < files.length; i++)    
+        {    
+            try    
+            {    
+                String fileName = files[i];    
+        	Log.d(TAG, "fileName ="+fileName);
+                if(fileName.compareTo("images") == 0 ||    
+                        fileName.compareTo("sounds") == 0 ||    
+                        fileName.compareTo("webkit") == 0)    
+                     {    
+                         continue;    
+                     } 
+
+        
+                File outFile = new File(mWorkingPath, fileName);    
+                if(outFile.exists()) continue;    
+        
+                InputStream in = getAssets().open(fileName);    
+                OutputStream out = new FileOutputStream(outFile);    
+        
+                // Transfer bytes from in to out   
+                byte[] buf = new byte[1024];    
+                int len;    
+                while ((len = in.read(buf)) > 0)    
+                {    
+                    out.write(buf, 0, len);    
+                }    
+        
+                in.close();    
+                out.close();    
+            }    
+            catch (FileNotFoundException e)    
+            {    
+                e.printStackTrace();    
+            }    
+            catch (IOException e)    
+            {    
+                e.printStackTrace();    
+            }    
+        }
+    }    
+
 }
