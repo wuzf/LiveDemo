@@ -21,7 +21,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;  
 import java.io.InputStreamReader; 
 import java.util.Properties; 
-import android.content.Context;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -51,8 +50,8 @@ public class LiveDemoActivity extends Activity implements
 	private boolean mIsVideoSizeKnown = false;
 	private boolean mIsVideoReadyToBePlayed = false;
 	private Properties prop;
-	private Context context;
 	private String PropPath;
+	private int chnum=0;
 		/**
 	 * 
 	 * Called when the activity is first created.
@@ -66,16 +65,15 @@ public class LiveDemoActivity extends Activity implements
 		holder.addCallback(this);
 		//PropPath = android.os.Environment.getExternalStorageDirectory().getAbsolutePath()+ "/com.wzf.LiveDemo/shared_prefs/";
 		PropPath = "/data/data/"+getPackageName()+"/shared_prefs/";
-		copyAssetsToPath(PropPath);
 		InitProp();
 		holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 		Log.d(TAG,"SDK Version: "+Build.VERSION.SDK_INT);
 		//extras = getIntent().getExtras();
 	}
 	
-	private void playVideo(Integer Media,Integer pathid) {
+	private void playVideo(Integer Media) {
 	    doCleanUp();
-	    Log.d(TAG,"\n playVideo: Media"+Media+"pathid"+pathid);
+	    Log.d(TAG,"\n playVideo: Media"+Media);
 	    try {
 	
 	        switch (Media) {
@@ -111,7 +109,8 @@ public class LiveDemoActivity extends Activity implements
 	                //path = "rtsp://58.241.134.33:554/11";
 
 
-				path=readtxt(String.valueOf(pathid));//
+				//path=readtxt(String.valueOf(pathid));//
+				path=(String)prop.get("channel"+String.valueOf(currentid));
 
 				if((path == "")||(path==null))
 				{
@@ -139,7 +138,7 @@ public class LiveDemoActivity extends Activity implements
 	                            		LiveDemoActivity.this,
 	                                    "current patch:"+path,
 	                                    Toast.LENGTH_LONG).show();
-			Log.d(TAG,"path="+path);
+			Log.d(TAG, "currentid="+currentid+"\npath=" + path);
 			mMediaPlayer = new MediaPlayer();
 			mMediaPlayer.setDisplay(holder);
 //	        mMediaPlayer.setDataSource(path);
@@ -199,7 +198,7 @@ public class LiveDemoActivity extends Activity implements
 	public void surfaceCreated(SurfaceHolder holder) {
 	    Log.d(TAG, "surfaceCreated called");
 	    //playVideo(extras.getInt(MEDIA));
-	    playVideo(STREAM_VIDEO,currentid);
+	    playVideo(STREAM_VIDEO);
 	
 	
 	}
@@ -241,25 +240,16 @@ public class LiveDemoActivity extends Activity implements
 	
 	public void resetvideo(int key)
 	{
-			    	//mMediaPlayer.stop();
-	    		    //releaseMediaPlayer();
-	    		    mMediaPlayer.reset();
-		int maxid=0;
-		try{ 
-			maxid=Integer.parseInt(readtxt("chnum.txt")); 
-			Log.d(TAG, "maxid==" + maxid);
-		} 
-		catch(NumberFormatException   e) 
-		{ 
-			
-		}
+		//mMediaPlayer.stop();
+		//releaseMediaPlayer();
+		mMediaPlayer.reset();
 
 		if(1==key)
 		{
 			Log.d(TAG, "+++++++++++++");
-			currentid=++currentid%maxid;
+			currentid=++currentid%chnum;
 			Log.d(TAG, "currentid1==" + currentid);
-			if(maxid==currentid)
+			if(chnum==currentid)
 				currentid=0;
 			Log.d(TAG, "currentid2==" + currentid);
 		}
@@ -267,11 +257,14 @@ public class LiveDemoActivity extends Activity implements
 		{	
 			Log.d(TAG, "------------");
 			if(0==currentid)
-				currentid=maxid;
-			currentid=--currentid%maxid;	
+				currentid=chnum;
+			currentid=--currentid%chnum;	
 		}
-				path=readtxt(String.valueOf(currentid));
-				Log.d(TAG, "path==================" + path);
+				//path=readtxt(String.valueOf(currentid));
+				path=(String)prop.get("channel"+currentid);
+				prop.put("currentid", String.valueOf(currentid));//put方法可以直接修改配置信息，不会重复添加
+				saveConfig(PropPath+"config.properties",prop);
+				Log.d(TAG, "currentid="+currentid+"\npath=" + path);
 				if((path == "")||(path==null))
 				{
 							path =channeldef;
@@ -349,7 +342,7 @@ public class LiveDemoActivity extends Activity implements
 	}
 
 	//读取配置文件 
-	public Properties loadConfig(Context context,String file) {
+	public Properties loadConfig(String file) {
 	Properties properties = new Properties();
 		try {
 			FileInputStream s = new FileInputStream(file);
@@ -361,7 +354,7 @@ public class LiveDemoActivity extends Activity implements
 		return properties;
 	}
 	//保存配置文件
-	public boolean saveConfig(Context context,String file, Properties properties) {
+	public boolean saveConfig(String file, Properties properties) {
 		try {
 			File fil=new File(file);
 			if(!fil.exists())
@@ -379,22 +372,21 @@ public class LiveDemoActivity extends Activity implements
 		boolean b=false;
 		String s="";
 		int i=0;
-		prop=loadConfig(context,PropPath+"config.properties");
+		prop=loadConfig(PropPath+"config.properties");
 		if(prop==null){
 			//配置文件不存在的时候创建配置文件 初始化配置信息
 			Log.d(TAG, "config file isn't exist!");
-			prop=new Properties();
-			prop.put("bool", "yes");
-			prop.put("string", "aaaaaaaaaaaaaaaa");
-			prop.put("int", "110");//也可以添加基本类型数据 get时就需要强制转换成封装类型
-			saveConfig(context,PropPath+"config.properties",prop);
+			copyAssetsToPath(PropPath);
+			prop=loadConfig(PropPath+"config.properties");
 		}
 		
-		prop.put("bool", "no");//put方法可以直接修改配置信息，不会重复添加
-		b=(((String)prop.get("bool")).equals("yes"))?true:false;//get出来的都是Object对象 如果是基本类型 需要用到封装类
-		s=(String)prop.get("string");
-		i=Integer.parseInt((String)prop.get("int"));
-		saveConfig(context,PropPath+"config.properties",prop);
+		try{ 
+			currentid=Integer.parseInt((String)prop.get("currentid"));
+			chnum=Integer.parseInt((String)prop.get("chnum"));
+		}
+		catch(NumberFormatException e) 
+		{ 
+		}
 	}
 
 	public void copyAssetsToPath(String Path) { 
