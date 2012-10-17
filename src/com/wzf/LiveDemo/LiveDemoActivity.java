@@ -52,8 +52,7 @@ public class LiveDemoActivity extends Activity implements
 	private boolean mIsVideoReadyToBePlayed = false;
 	private Properties prop;
 	private Context context;
-	//private String PropPath1 = "/data/data/"+ getPackageName()+"/shared_prefs/config.properties";
-	private String PropPath2 = android.os.Environment.getExternalStorageDirectory().getAbsolutePath()+ "/com.wzf.LiveDemo/shared_prefs/";
+	private String PropPath;
 		/**
 	 * 
 	 * Called when the activity is first created.
@@ -65,8 +64,10 @@ public class LiveDemoActivity extends Activity implements
 		mPreview = (SurfaceView) findViewById(R.id.surface);
 		holder = mPreview.getHolder();
 		holder.addCallback(this);
-		copyAssetsToSD();
-		TestProp();
+		//PropPath = android.os.Environment.getExternalStorageDirectory().getAbsolutePath()+ "/com.wzf.LiveDemo/shared_prefs/";
+		PropPath = "/data/data/"+getPackageName()+"/shared_prefs/";
+		copyAssetsToPath(PropPath);
+		InitProp();
 		holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 		Log.d(TAG,"SDK Version: "+Build.VERSION.SDK_INT);
 		//extras = getIntent().getExtras();
@@ -374,11 +375,11 @@ public class LiveDemoActivity extends Activity implements
 		return true;
 	}
 
-	public void TestProp(){
+	public void InitProp(){
 		boolean b=false;
 		String s="";
 		int i=0;
-		prop=loadConfig(context,PropPath2+"config.properties");
+		prop=loadConfig(context,PropPath+"config.properties");
 		if(prop==null){
 			//配置文件不存在的时候创建配置文件 初始化配置信息
 			Log.d(TAG, "config file isn't exist!");
@@ -386,31 +387,27 @@ public class LiveDemoActivity extends Activity implements
 			prop.put("bool", "yes");
 			prop.put("string", "aaaaaaaaaaaaaaaa");
 			prop.put("int", "110");//也可以添加基本类型数据 get时就需要强制转换成封装类型
-			saveConfig(context,PropPath2+"config.properties",prop);
+			saveConfig(context,PropPath+"config.properties",prop);
 		}
 		
 		prop.put("bool", "no");//put方法可以直接修改配置信息，不会重复添加
 		b=(((String)prop.get("bool")).equals("yes"))?true:false;//get出来的都是Object对象 如果是基本类型 需要用到封装类
 		s=(String)prop.get("string");
 		i=Integer.parseInt((String)prop.get("int"));
-		saveConfig(context,PropPath2+"config.properties",prop);
+		saveConfig(context,PropPath+"config.properties",prop);
 	}
 
-	void copyAssetsToSD() { 
-            String[] files;             
-            try    
-        {    
-            files = this.getResources().getAssets().list("");    
-        }    
-        catch (IOException e1)    
-        {    
-            return;    
-        }   
-        //String DB_PATH = android.os.Environment.getExternalStorageDirectory().getAbsolutePath()+ "/com.wzf.LiveDemo/shared_prefs/";
-		//String DB_PATH = "/data/data/"+ getPackageName()+"/shared_prefs/";
-		//Log.d(TAG, "DB_PATH ="+DB_PATH);
-        File mWorkingPath = new File(PropPath2);
-        //if this directory does not exists, make one. 
+	public void copyAssetsToPath(String Path) { 
+		String[] files;      
+		try{    
+			files = this.getResources().getAssets().list("");    
+		}    
+		catch (IOException e1)    
+		{    
+			return;    
+		}   
+		File mWorkingPath = new File(Path);
+		//if this directory does not exists, make one. 
         if(!mWorkingPath.exists())    
         {    
             Log.d(TAG, "directory does not exists, make one");
