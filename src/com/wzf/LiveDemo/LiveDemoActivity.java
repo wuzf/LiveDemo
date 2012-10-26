@@ -52,6 +52,8 @@ public class LiveDemoActivity extends Activity implements
 	private Properties prop;
 	private String PropPath;
 	private int chnum=0;
+	private long waitTime = 2000;  
+    private long touchTime = 0; 
 		/**
 	 * 
 	 * Called when the activity is first created.
@@ -248,10 +250,8 @@ public class LiveDemoActivity extends Activity implements
 		{
 			Log.d(TAG, "+++++++++++++");
 			currentid=++currentid%chnum;
-			Log.d(TAG, "currentid1==" + currentid);
 			if(chnum==currentid)
 				currentid=0;
-			Log.d(TAG, "currentid2==" + currentid);
 		}
 		else if(0==key) 
 		{	
@@ -306,6 +306,16 @@ public class LiveDemoActivity extends Activity implements
 	    		else
 	    			mMediaPlayer.start();
 		}
+		else if(msg.getAction() == KeyEvent.ACTION_DOWN && KeyEvent.KEYCODE_BACK == keyCode) {  
+            long currentTime = System.currentTimeMillis();  
+            if((currentTime-touchTime)>=waitTime) {  
+                Toast.makeText(this, getText(R.string.Toast_msg_exit), Toast.LENGTH_SHORT).show();  
+                touchTime = currentTime;  
+            }else {  
+                finish();  
+            }  
+            return true;  
+        }
 		else
 			return super.onKeyDown(keyCode, msg);
     		return (true);

@@ -2,4 +2,5 @@
 <resources>
     <string name="hello">Hello World, LiveDemoActivity!</string>
     <string name="app_name">LiveDemo</string>
+    <string name="Toast_msg_exit">Press Back Once More To Exit.</string>
 </resources>
